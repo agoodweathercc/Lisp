@@ -26,8 +26,6 @@ $
 $
 (EQUAL 3 3)
 $
-(EQUAL () NIL)
-$
 (EQUAL (QUOTE (1.2)) (QUOTE  (1.2)))
 $
 (EQUAL (QUOTE (1.2)) (QUOTE  (1 2)))
@@ -56,4 +54,6 @@ $
 (NOTSOSILLY 0 0)
 $
 (NOTSOSILLY 1 1)
+$
+(EQUAL () NIL)
 $$

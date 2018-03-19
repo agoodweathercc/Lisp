@@ -1,0 +1,7 @@
+Borrow ideas from the artile by Peter Norvig. http://norvig.com/lispy.html
+I used three functions(read_from_tokens, tokensizer and parse) there to parse the string.
+
+1) Any expression will be tokenized and parsed, saved in a list. Some sanity check will be performed such as number of left and right parenthesis should match, number of . cannot be more than two at each recursive level.
+2) The core part is convert function, which is a recursive function that convert all s-expression into dot expression.
+3) The other auxiliary functions are used to formating the output, converting between list and string, etc.
+ 
