@@ -31,6 +31,7 @@ def cons(exp1, exp2):
     if (exp2 == 'NIL' or exp2 == None):
         # assert isinstance(exp1,list)
         # assert len(exp1)==5
+        return ['(', exp1, '.', 'NIL', ')'] # not sure here
         return exp1
     else:
         return ['(', exp1,'.', exp2,')']
@@ -44,7 +45,7 @@ def evlis(lis, alist, dlist):
     if null(lis)==True:
         # print('there is nothing to evalulate')
         pass
-        # return 'NIL'
+        # return 'NIL' # not sure here
     elif (isinstance(lis,str)==True or isinstance(lis, int)==True):
         return lis
     else:
@@ -95,7 +96,7 @@ def lispapply(f,x, alist, dlist):
 
         elif f == 'ATOM':
             if Atom(car(x)):
-                return 'True'
+                return 'T'
             else:
                 return 'NIL'
         elif f == 'INT':
@@ -131,6 +132,7 @@ def evcon(exp, alist, dlist):
     global galist,gdlist
     if null(exp):
         print('error when evaluating evcon')
+        return 'NIL' # not sure here
     elif evaluate(car(car(exp)), galist,gdlist)=='T':
         return evaluate(car(cdr(car(exp))), galist,gdlist)
     elif evaluate(car(car(exp)), galist,gdlist)=='NIL':
@@ -232,17 +234,18 @@ functiontest = [convert(parse('(DEFUN SILLY (A B) (PLUS A B))')), convert(parse(
 
 test_str = ['(5)', '(QUOTE (a . b))', '(CONS 3 4)', '(CONS 4 (QUOTE (a . b)))', '(DEFUN SILLY (A B) (PLUS A B))',
             '(SILLY 5 6)', '(PLUS 5 6)', '(CAR (QUOTE (4 . b)))', '(CDR (QUOTE (4 . b)))',  '(SILLY (CAR (QUOTE (5 . 6))) (CDR (QUOTE (5 . 6))) )']
-
+test_str = ['(DEFUN COUNT (X) (COND((ATOM X) 1)(T (PLUS (COUNT (CAR X)) (COUNT (CDR X))))))',
+            '(COUNT (QUOTE (1 2 3)))']
 # test_str = ['(-1)']
 length = len(test_str)
-# for i in range(length):
-for i in [3]:
+for i in range(length):
+# for i in [8]:
     dotstr = convert(parse(test_str[i]))
     print ('the string %s is the following'%i)
     pretty_print(dotstr)
-    result = evaluate(dotstr,galist,gdlist)
+    result = evaluate(dotstr, galist, gdlist)
     pretty_print(evaluate(dotstr, galist, gdlist))
-    print(result)
+    print(result);print('\n')
     # pretty_print(result)
 
 def read_test(path):
@@ -254,7 +257,7 @@ def read_test(path):
     return mylist
 
 if __name__ == '__main__':
-    test = read_test('./project2-test-case/def_tests')
+    test = read_test('./project2-test-case/null.txt')
     for i in test:
         # print(i)
         dotstr = convert(parse(i))
