@@ -71,12 +71,12 @@ def evlis(lis, alist, dlist):
     global galist, gdlist
     if null(lis)=='T':
         return 'NIL'
-    elif (isinstance(lis,str)==True or isinstance(lis, int)==True):
-        print('arg of evlis must be a list, not atom')
-        raise lisperror
+    # elif (isinstance(lis,str)==True or isinstance(lis, int)==True):
+    #     print('arg of evlis must be a list, not atom')
+    #     raise lisperror
     else:
-        l1 = evaluate(car(lis), alist, {})
-        l2 = evlis(cdr(lis), alist, {})
+        l1 = evaluate(car(lis), {}, {})
+        l2 = evlis(cdr(lis), {}, {})
         return cons(l1, l2)
         # for i in lis:
             # evaluate(i,alist,dlist)
@@ -200,10 +200,10 @@ def lispapply(f,x, alist, dlist):
             else:
                 return 'NIL'
         else:
-            arg1 = cdr(getval(f, gdlist))
-            alist = addpairs(car(getval(f, gdlist)), x, alist)
+            arg1 = cdr(getval(f, gdlist)) # not sure here
+            addpairs(car(getval(f, gdlist)), x, {})
             arg3 = {} # gdlist
-            return evaluate(arg1, alist, arg3)
+            return evaluate(arg1, {}, arg3)
     else:
         print(('No such function'))
         raise lisperror
@@ -231,12 +231,12 @@ def evcon(exp, alist, dlist):
             print('All clauses of COND must be of size 2')
             raise lisperror
         else:
-            if evaluate(car(car(exp)), alist, {}) == 'T' or isinstance(evaluate(car(car(exp)), alist, {}), int)==True:
+            if evaluate(car(car(exp)), {}, {}) == 'T' or isinstance(evaluate(car(car(exp)), {}, {}), int)==True:
                 e = car(cdr(car(exp)))
-                return evaluate(e, alist, {})
+                return evaluate(e, {}, {})
             # elif evaluate(car(car(exp)), alist, {}) == 'NIL':
             else:
-                return evcon(cdr(exp), alist, {})
+                return evcon(cdr(exp), {}, {})
 
 def evaluate(exp, alist, dlist):
     global galist
@@ -257,8 +257,8 @@ def evaluate(exp, alist, dlist):
                 return 'T'
             elif (exp == 'NIL'):
                 return 'NIL'
-            elif (exp in alist):
-                return alist[exp]
+            elif (exp in galist):
+                return galist[exp]
                 # return alist.get(exp) # very important!
             else:
                 print('unbound variable')
@@ -270,7 +270,7 @@ def evaluate(exp, alist, dlist):
                 raise lisperror
             return car(cdr(exp))
         elif car(exp)=='COND':
-            return evcon(cdr(exp), alist, {})
+            return evcon(cdr(exp), {}, {})
         elif car(exp)=='DEFUN':
             func_name = car(cdr(exp))
             plist = car(cdr(cdr(exp)))
@@ -279,14 +279,14 @@ def evaluate(exp, alist, dlist):
             return func_name
         else:
             f = car(exp) # exp[1] # same as car(exp), sketchy here
-            x = evlis(cdr(exp), alist, {})
+            x = evlis(cdr(exp), {}, {})
             # return lispapply(f, x, alist, {})
             if x == None:
                 return f
             else:
                 _galist = galist
                 _gdlist = gdlist
-                return lispapply(f, x, alist, {})
+                return lispapply(f, x, {}, {})
     else:
         print('Must be some error in evaluation')
         raise lisperror
@@ -296,29 +296,29 @@ galist = {'b1':'NIL','b2':'T','b3':'NIL'}
 gdlist = {'e1':8,'e2':4,'e3':2}
 
 def addpairs(plist, x, alist):
-    # global galist
-    if plist=='NIL' or plist ==['NIL']:
-        alist['NIL']='NIL'
-        return alist
+    global galist
+    if plist=='NIL':
+        return galist
     else:
         try:
             len(plist)==5
             len(x) == 5
         except (AssertionError, TypeError):
             pass
-        if car(plist) in alist:
-            # print('variabel already exists in alist ! ')
-            if alist[car(plist)] != car(x):
+        if car(plist) in galist:
+            if galist[car(plist)] != car(x):
                 pass
-                # print('overwritten occures')
-        alist[car(plist)] = car(x)
-        addpairs(cdr(plist), cdr(x), alist)
-        return alist
+                print('before: %s' % galist[car(plist)])
+                print('overwritten happen, key is %s, value is %s'%(car(plist), car(x)))
+        galist[car(plist)] = car(x) # need to evalulate it!
+        # galist[car(plist)] = evaluate(car(x), {},{})
+        addpairs(cdr(plist), cdr(x), {})
+        return galist
 
 plis = convert(parse('(p1 p2 p3)'))
 xlis = convert(parse('(x1 x2 x3)'))
 alis = {}
-addpairs(plis, xlis, alis)
+# addpairs(plis, xlis, alis)
 
 
 
@@ -359,7 +359,6 @@ def read_test(path):
 print('here')
 if __name__ == '__main__':
     test = read_test('./project2-test-case/null.txt')
-
     for i in test:
         # print(i)
         dotstr = convert(parse(i))
@@ -368,8 +367,8 @@ if __name__ == '__main__':
             # print('finish pretty print')
             evaluate(dotstr, {}, {})
             result = evaluate(dotstr, {}, {})
-            print(result)
-            # pretty_print(result)
+            # print(result)
+            pretty_print(result)
             print('\n')
         except lisperror:
             print('lisp error are caught\n')
