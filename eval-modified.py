@@ -279,14 +279,14 @@ def evaluate(exp, alist, dlist):
             return func_name
         else:
             f = car(exp) # exp[1] # same as car(exp), sketchy here
-            x = evlis(cdr(exp), {}, {})
+            args = evlis(cdr(exp), {}, {})
             # return lispapply(f, x, alist, {})
-            if x == None:
+            if args == None:
                 return f
             else:
                 _galist = galist
                 _gdlist = gdlist
-                return lispapply(f, x, {}, {})
+                return lispapply(f, args, {}, {})
     else:
         print('Must be some error in evaluation')
         raise lisperror
@@ -296,9 +296,14 @@ galist = {'b1':'NIL','b2':'T','b3':'NIL'}
 gdlist = {'e1':8,'e2':4,'e3':2}
 
 def addpairs(plist, x, alist):
+
+
     global galist
     if plist=='NIL':
         return galist
+    elif (isinstance(plist,str)==True or isinstance(plist,int)==True):
+        print('plist should not be just a string or number')
+        raise lisperror
     else:
         try:
             len(plist)==5
@@ -310,6 +315,7 @@ def addpairs(plist, x, alist):
                 pass
                 print('before: %s' % galist[car(plist)])
                 print('overwritten happen, key is %s, value is %s'%(car(plist), car(x)))
+        # if car(plist) in galist==False:
         galist[car(plist)] = car(x) # need to evalulate it!
         # galist[car(plist)] = evaluate(car(x), {},{})
         addpairs(cdr(plist), cdr(x), {})
