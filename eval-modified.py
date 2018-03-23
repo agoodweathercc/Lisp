@@ -75,8 +75,9 @@ def evlis(lis, alist, dlist):
     #     print('arg of evlis must be a list, not atom')
     #     raise lisperror
     else:
-        l1 = evaluate(car(lis), {}, {})
-        l2 = evlis(cdr(lis), {}, {})
+        tmp1 = alist.copy(); tmp2 = alist.copy()
+        l1 = evaluate(car(lis), tmp1, {}) # some side effect here, wait seems not to be the case
+        l2 = evlis(cdr(lis), tmp2, {})
         return cons(l1, l2)
         # for i in lis:
             # evaluate(i,alist,dlist)
@@ -86,7 +87,7 @@ def lispapply(f,x, alist, dlist):
         if f=='CAR':
             assert len(x)==5
             if cdr(x)!='NIL':
-                print('car expects only 1 arguments')
+                print('car expects only one argument')
                 raise lisperror
             return car(car(x))
         elif f=='CDR':
@@ -96,6 +97,9 @@ def lispapply(f,x, alist, dlist):
                 raise lisperror
             return cdr(car(x))
         elif f == 'CONS':
+            if cdr(x)=='NIL':
+                print('CONS expects exactly two arguments, but found only one argument')
+                raise lisperror
             if cdr(cdr(x))!='NIL':
                 print('CONS expects exactly two arguments')
                 raise lisperror
@@ -106,8 +110,11 @@ def lispapply(f,x, alist, dlist):
                 raise lisperror
             return null(car(x))
         elif f == 'EQ':
+            if cdr(x) == 'NIL':
+                print('EQ expects exactly two arguments, but found only one argument')
+                raise lisperror
             if cdr(cdr(x)) != 'NIL':
-                print('CONS expects exactly two arguments')
+                print('EQ expects exactly two arguments')
                 raise lisperror
             if (Atom(car(x))=='NIL' or Atom(car(cdr(x))) == 'NIL'):
                 print('EQ can only be applied to two atomic arguments')
@@ -157,8 +164,11 @@ def lispapply(f,x, alist, dlist):
                 raise lisperror
             return car(x) % car(cdr(x))
         elif f == 'LESS':
+            if cdr(x) == 'NIL':
+                print('LESS expects exactly two arguments, but found only one argument')
+                raise lisperror
             if cdr(cdr(x)) != 'NIL':
-                print('CONS expects exactly two arguments')
+                print('LESS expects exactly two arguments')
                 raise lisperror
             if (isinstance(car(x),int)!=True or isinstance(car(cdr(x)), int)!=True):
                 print('Less expects two args are interger')
@@ -168,8 +178,11 @@ def lispapply(f,x, alist, dlist):
             else:
                 return 'NIL'
         elif f == 'GREATER':
+            if cdr(x) == 'NIL':
+                print('GREATER expects exactly two arguments, but found only one argument')
+                raise lisperror
             if cdr(cdr(x)) != 'NIL':
-                print('CONS expects exactly two arguments')
+                print('GREATER expects exactly two arguments')
                 raise lisperror
             if (isinstance(car(x),int)!=True or isinstance(car(cdr(x)), int)!=True):
                 print('Less expects two args are interger')
@@ -201,9 +214,9 @@ def lispapply(f,x, alist, dlist):
                 return 'NIL'
         else:
             arg1 = cdr(getval(f, gdlist)) # not sure here
-            addpairs(car(getval(f, gdlist)), x, {})
+            alist_tmp = addpairs(car(getval(f, gdlist)), x, alist)
             arg3 = {} # gdlist
-            return evaluate(arg1, {}, arg3)
+            return evaluate(arg1, alist_tmp, arg3)
     else:
         print(('No such function'))
         raise lisperror
@@ -223,6 +236,8 @@ def lispapply(f,x, alist, dlist):
 # lispapply('CDR', convert(parse('((x y z))')), alist,{})
 def evcon(exp, alist, dlist):
     global galist,gdlist
+    alist_tmp1 = alist.copy()
+    alist_tmp2 = alist.copy()
     if null(exp)=='T':
         print('All conditions of COND evaluated to false')
         raise lisperror
@@ -231,12 +246,12 @@ def evcon(exp, alist, dlist):
             print('All clauses of COND must be of size 2')
             raise lisperror
         else:
-            if evaluate(car(car(exp)), {}, {}) == 'T' or isinstance(evaluate(car(car(exp)), {}, {}), int)==True:
+            if evaluate(car(car(exp)), alist.copy(), {}) == 'T' or isinstance(evaluate(car(car(exp)), alist.copy(), {}), int)==True:
                 e = car(cdr(car(exp)))
-                return evaluate(e, {}, {})
+                return evaluate(e, alist.copy(), {})
             # elif evaluate(car(car(exp)), alist, {}) == 'NIL':
             else:
-                return evcon(cdr(exp), {}, {})
+                return evcon(cdr(exp), alist.copy(), {})
 
 def evaluate(exp, alist, dlist):
     global galist
@@ -257,11 +272,11 @@ def evaluate(exp, alist, dlist):
                 return 'T'
             elif (exp == 'NIL'):
                 return 'NIL'
-            elif (exp in galist):
-                return galist[exp]
+            elif (exp in alist):
+                return alist[exp]
                 # return alist.get(exp) # very important!
             else:
-                print('unbound variable')
+                print('Unbound Variable in alist')
                 raise lisperror
     elif Atom(car(exp))=='T':
         if car(exp)=='QUOTE':
@@ -270,7 +285,7 @@ def evaluate(exp, alist, dlist):
                 raise lisperror
             return car(cdr(exp))
         elif car(exp)=='COND':
-            return evcon(cdr(exp), {}, {})
+            return evcon(cdr(exp), alist, {})
         elif car(exp)=='DEFUN':
             func_name = car(cdr(exp))
             plist = car(cdr(cdr(exp)))
@@ -278,15 +293,16 @@ def evaluate(exp, alist, dlist):
             gdlist[func_name] = ['(', plist, '.', fb, ')']
             return func_name
         else:
+            alist_tmp = alist.copy()
             f = car(exp) # exp[1] # same as car(exp), sketchy here
-            args = evlis(cdr(exp), {}, {})
+            args = evlis(cdr(exp), alist_tmp, {})
             # return lispapply(f, x, alist, {})
             if args == None:
                 return f
             else:
-                _galist = galist
+                _alist = alist
                 _gdlist = gdlist
-                return lispapply(f, args, {}, {})
+                return lispapply(f, args, alist, {})
     else:
         print('Must be some error in evaluation')
         raise lisperror
@@ -300,7 +316,7 @@ def addpairs(plist, x, alist):
 
     global galist
     if plist=='NIL':
-        return galist
+        return alist
     elif (isinstance(plist,str)==True or isinstance(plist,int)==True):
         print('plist should not be just a string or number')
         raise lisperror
@@ -310,16 +326,16 @@ def addpairs(plist, x, alist):
             len(x) == 5
         except (AssertionError, TypeError):
             pass
-        if car(plist) in galist:
-            if galist[car(plist)] != car(x):
+        if car(plist) in alist:
+            if alist[car(plist)] != car(x):
                 pass
-                print('before: %s' % galist[car(plist)])
-                print('overwritten happen, key is %s, value is %s'%(car(plist), car(x)))
-        # if car(plist) in galist==False:
-        galist[car(plist)] = car(x) # need to evalulate it!
-        # galist[car(plist)] = evaluate(car(x), {},{})
-        addpairs(cdr(plist), cdr(x), {})
-        return galist
+                # print('before: %s' % alist[car(plist)])
+                # print('overwritten happen, key is %s, value is %s'%(car(plist), car(x)))
+        # if car(plist) in alist==False:
+        alist[car(plist)] = car(x) # need to evalulate it!
+        # alist[car(plist)] = evaluate(car(x), alist,{})
+        addpairs(cdr(plist), cdr(x), alist)
+        return alist
 
 plis = convert(parse('(p1 p2 p3)'))
 xlis = convert(parse('(x1 x2 x3)'))
@@ -364,15 +380,15 @@ def read_test(path):
     return mylist
 print('here')
 if __name__ == '__main__':
-    test = read_test('./project2-test-case/null.txt')
+    test = read_test('./project2-test-case/error_tests')
     for i in test:
         # print(i)
         dotstr = convert(parse(i))
         try:
             pretty_print(dotstr)
             # print('finish pretty print')
-            evaluate(dotstr, {}, {})
-            result = evaluate(dotstr, {}, {})
+            evaluate(dotstr, alist, {})
+            result = evaluate(dotstr, alist, {})
             # print(result)
             pretty_print(result)
             print('\n')
